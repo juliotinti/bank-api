@@ -55,6 +55,12 @@ POST /reset
 
 Response: `200 OK`
 
+Body:
+
+```text
+OK
+```
+
 ### Get Balance
 
 ```http
@@ -70,13 +76,9 @@ Response when the account exists:
 
 Response when the account does not exist:
 
-```json
-{
-  "status": 404,
-  "error": "Not Found",
-  "message": "Account not found: 100",
-  "path": "/balance"
-}
+```http
+404 Not Found
+0
 ```
 
 ### Process Event
@@ -128,7 +130,7 @@ Response:
 }
 ```
 
-Transfer requires both origin and destination accounts to exist.
+Transfer requires the origin account to exist and have enough balance. The destination account is credited and created when it does not exist.
 
 ```json
 {
@@ -149,7 +151,7 @@ Response:
   },
   "destination": {
     "id": "300",
-    "balance": 20
+    "balance": 15
   }
 }
 ```
@@ -174,27 +176,19 @@ curl.exe -i "$base/balance?account_id=100"
 
 ## Error Response Format
 
-Handled errors return JSON in this format:
+Handled errors return a plain `0` body with the appropriate HTTP status:
 
-```json
-{
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Amount must be positive: -10",
-  "path": "/event"
-}
+```http
+404 Not Found
+0
 ```
 
-Main error messages:
+Examples:
 
-- `Account not found: 200`
-- `Insufficient balance for account: 100`
-- `Amount is required`
-- `Amount must be positive: -10`
-- `Event type is required`
-- `Unsupported event type: unknown`
-- `Origin account is required`
-- `Destination account is required`
+- Missing account: `404 0`
+- Invalid event payload: `400 0`
+- Insufficient balance: `400 0`
+- Unknown event type: `400 0`
 
 ## Main Decisions
 
@@ -203,6 +197,7 @@ Main error messages:
 - `POST /reset` clears accounts and events.
 - Deposit creates an account when needed.
 - Withdraw fails when the origin account does not exist or has insufficient balance.
-- Transfer fails when either origin or destination does not exist.
+- Transfer fails when the origin account does not exist.
+- Transfer creates or credits the destination account.
 - Transfer runs inside a transaction to avoid partial state changes.
-- Errors return a structured body to make debugging and Postman usage easier.
+- Handled errors follow the challenge contract and return `0` as response body.
