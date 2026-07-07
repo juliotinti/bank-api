@@ -6,10 +6,12 @@ import com.julio.bank.api.entity.Event;
 import com.julio.bank.api.repository.EventRepository;
 import com.julio.bank.api.service.strategy.EventStrategy;
 import com.julio.bank.api.service.strategy.EventStrategyResolver;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class EventService
 {
 
@@ -31,21 +33,25 @@ public class EventService
     @Transactional
     public void deleteAll()
     {
+        log.info("Resetting all events");
         eventRepository.deleteAll();
     }
 
     @Transactional
     public EventResult process(EventRequest request)
     {
+        log.debug("Processing event: type={}, origin={}, destination={}, amount={}",
+                request.type(), request.origin(), request.destination(), request.amount());
+
         EventStrategy strategy = strategyResolver.resolve(request.type());
         EventResult result = strategy.execute(request);
 
         eventRepository.save(
-                new Event(request.type().name().toLowerCase(),
-                          request.origin(), request.destination(),
-                          request.amount()
+                new Event(request.type().name().toLowerCase(), request.origin(),
+                        request.destination(), request.amount()
         ));
 
+        log.info("Event processed successfully: type={}", request.type());
         return result;
     }
 }
