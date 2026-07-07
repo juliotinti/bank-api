@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -17,31 +19,59 @@ class BalanceRepositoryTest {
     private BalanceRepository balanceRepository;
 
     @Test
-    void shouldAddPositiveDeltaToExistingBalance() {
-        balanceRepository.save(new Balance("200", 10L));
+    void shouldPersistBalance_whenSaved_thenFindByIdReturnsIt()
+    {
+        balanceRepository.save(new Balance("100", 50L));
 
-        int rowsAffected = balanceRepository.addToBalance("200", 10L);
+        Optional<Balance> found = balanceRepository.findById("100");
 
-        assertThat(rowsAffected).isEqualTo(1);
-        assertThat(balanceRepository.findById("200")).isPresent();
-        assertThat(balanceRepository.findById("200").get().getBalance()).isEqualTo(20L);
+        assertThat(found).isPresent();
+        assertThat(found.get().getBalance()).isEqualTo(50L);
     }
 
     @Test
-    void shouldSubtractWithNegativeDeltaFromExistingBalance() {
-        balanceRepository.save(new Balance("300", 20L));
-
-        int rowsAffected = balanceRepository.addToBalance("300", -5L);
-
-        assertThat(rowsAffected).isEqualTo(1);
-        assertThat(balanceRepository.findById("300").get().getBalance()).isEqualTo(15L);
+    void shouldReturnEmpty_whenBalanceIdDoesNotExist_thenNoResultIsFound()
+    {
+        assertThat(balanceRepository.findById("does-not-exist")).isEmpty();
     }
 
     @Test
-    void shouldReturnZeroRowsAffectedWhenAddingToBalanceThatDoesNotExist() {
-        int rowsAffected = balanceRepository.addToBalance("does-not-exist", 10L);
+    void shouldReturnBalance_whenFindByIdForUpdateIsCalledOnExistingBalanceId_thenBalanceIsReturned()
+    {
+        balanceRepository.save(new Balance("200", 15L));
 
-        assertThat(rowsAffected).isZero();
+        Optional<Balance> found = balanceRepository.findByIdForUpdate("200");
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getBalance()).isEqualTo(15L);
     }
 
+    @Test
+    void shouldReturnEmpty_whenFindByIdForUpdateIsCalledOnMissingBalanceId_thenNoResultIsFound() {
+        assertThat(balanceRepository.findByIdForUpdate("does-not-exist")).isEmpty();
+    }
+
+    @Test
+    void shouldUpdateBalance_whenSavedAgainWithNewValue_thenPersistedValueIsUpdated()
+    {
+        Balance balance = new Balance("300", 10L);
+        balanceRepository.save(balance);
+
+        balance.setBalance(30L);
+        balanceRepository.save(balance);
+
+        assertThat(balanceRepository.findById("300").get().getBalance()).isEqualTo(30L);
+    }
+
+    @Test
+    void shouldRemoveAllBalances_whenDeleteAllIsCalled_thenNoneAreFound()
+    {
+        balanceRepository.save(new Balance("400", 10L));
+        balanceRepository.save(new Balance("500", 20L));
+
+        balanceRepository.deleteAll();
+
+        assertThat(balanceRepository.findById("400")).isEmpty();
+        assertThat(balanceRepository.findById("500")).isEmpty();
+    }
 }

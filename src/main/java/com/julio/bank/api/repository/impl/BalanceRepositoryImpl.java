@@ -12,27 +12,32 @@ public class BalanceRepositoryImpl implements BalanceRepository {
 
     private final BalanceJpaRepository jpaRepository;
 
-    public BalanceRepositoryImpl(BalanceJpaRepository jpaRepository) {
+    public BalanceRepositoryImpl(BalanceJpaRepository jpaRepository)
+    {
         this.jpaRepository = jpaRepository;
     }
 
     @Override
-    public Optional<Balance> findById(String id) {
+    public Optional<Balance> findById(String id)
+    {
         return jpaRepository.findById(id);
     }
 
     @Override
-    public Balance save(Balance balance) {
+    public Balance save(Balance balance)
+    {
         return jpaRepository.save(balance);
     }
 
     @Override
-    public int addToBalance(String id, Long delta) {
-        return jpaRepository.addToBalance(id, delta);
+    public void deleteAll()
+    {
+        jpaRepository.deleteAll();
     }
 
     @Override
-    public void deleteAll() {
-        jpaRepository.deleteAll();
+    public Optional<Balance> findByIdForUpdate(String id)
+    {
+        return jpaRepository.findByIdForUpdate(id);
     }
 }

@@ -8,14 +8,9 @@ public interface BalanceRepository {
 
     Optional<Balance> findById(String id);
 
-    Balance save(Balance balance);
+    Optional<Balance> findByIdForUpdate(String id);
 
-    /**
-     * Directly using the database (UPDATE balances SET balance = balance + :delta WHERE id = :id).
-     *
-     * Returns the affects row quantity: 0 means that the count doesn't exists
-     */
-    int addToBalance(String id, Long delta);
+    Balance save(Balance balance);
 
     void deleteAll();
 }
