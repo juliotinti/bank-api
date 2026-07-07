@@ -3,6 +3,7 @@ package com.julio.bank.api.controller;
 import com.julio.bank.api.exception.BalanceNotFoundException;
 import com.julio.bank.api.exception.InsufficientBalanceException;
 import com.julio.bank.api.exception.InvalidAmountException;
+import com.julio.bank.api.exception.InvalidEventTypeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +34,11 @@ public class GlobalExceptionHandler
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Integer> handleIllegalArgument(IllegalArgumentException ex)
     {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(0);
+    }
+
+    @ExceptionHandler(InvalidEventTypeException.class)
+    public ResponseEntity<Integer> handleInvalidEventType(InvalidEventTypeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(0);
     }
 }

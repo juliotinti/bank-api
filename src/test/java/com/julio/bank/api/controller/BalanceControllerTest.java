@@ -3,10 +3,12 @@ package com.julio.bank.api.controller;
 import com.julio.bank.api.entity.Balance;
 import com.julio.bank.api.exception.BalanceNotFoundException;
 import com.julio.bank.api.service.BalanceService;
+import com.julio.bank.api.validation.EventValidation;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 

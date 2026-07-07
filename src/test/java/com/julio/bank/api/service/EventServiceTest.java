@@ -7,6 +7,7 @@ import com.julio.bank.api.domain.EventType;
 import com.julio.bank.api.entity.Event;
 import com.julio.bank.api.exception.BalanceNotFoundException;
 import com.julio.bank.api.exception.InvalidAmountException;
+import com.julio.bank.api.exception.InvalidEventTypeException;
 import com.julio.bank.api.repository.EventRepository;
 import com.julio.bank.api.service.strategy.EventStrategy;
 import com.julio.bank.api.service.strategy.EventStrategyResolver;
@@ -84,23 +85,4 @@ class EventServiceTest {
         verify(eventRepository, never()).save(any(Event.class));
     }
 
-    @Test
-    void shouldThrowInvalidAmountException_whenAmountIsNegative_thenProcessNeverRuns()
-    {
-        assertThatThrownBy(() -> eventService.process(
-                new EventRequest(EventType.WITHDRAW, "100", null, -100L)))
-                .isInstanceOf(InvalidAmountException.class);
-
-        verifyNoInteractions(strategyResolver, eventRepository);
-    }
-
-    @Test
-    void shouldThrowInvalidAmountException_whenAmountIsZero_thenProcessNeverRuns()
-    {
-        assertThatThrownBy(() -> eventService.process(
-                new EventRequest(EventType.DEPOSIT, null, "100", 0L)))
-                .isInstanceOf(InvalidAmountException.class);
-
-        verifyNoInteractions(strategyResolver, eventRepository);
-    }
 }

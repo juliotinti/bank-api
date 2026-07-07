@@ -6,10 +6,12 @@ import com.julio.bank.api.domain.EventResult;
 import com.julio.bank.api.exception.BalanceNotFoundException;
 import com.julio.bank.api.exception.InsufficientBalanceException;
 import com.julio.bank.api.service.EventService;
+import com.julio.bank.api.validation.EventValidation;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EventController.class)
+@Import(EventValidation.class)
 class EventControllerTest
 {
 
@@ -118,5 +121,68 @@ class EventControllerTest
                         .content("{\"type\":\"unknown\",\"destination\":\"100\",\"amount\":10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("0")));
+    }
+
+    @Test
+    void shouldReturn400WithZeroBody_whenAmountIsMissing_thenEventServiceIsNeverCalled()
+    {
+        Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"deposit\",\"destination\":\"100\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("0")));
+    }
+
+    @Test
+    void shouldReturn400WithZeroBody_whenAmountIsZero_thenEventServiceIsNeverCalled()
+    {
+        Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("0")));
+    }
+
+    @Test
+    void shouldReturn400WithZeroBody_whenTypeIsMissing_thenEventServiceIsNeverCalled()
+    {
+        Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"destination\":\"100\",\"amount\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("0")));
+    }
+
+    @Test
+    void shouldReturn400WithZeroBody_whenTypeIsEmptyString_thenEventServiceIsNeverCalled()
+    {
+        Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"\",\"destination\":\"100\",\"amount\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("0")));
+    }
+
+    @Test
+    void shouldReturn400WithZeroBody_whenBothTypeAndAmountAreInvalid_thenEventServiceIsNeverCalled()
+    {
+        Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"unknown\",\"destination\":\"100\",\"amount\":-10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("0")));
+    }
+
+    @Test
+    void shouldReturn201_whenTypeHasMixedCasing_thenTypeIsParsedCorrectly()
+    {
+        when(eventService.process(any(EventRequest.class)))
+                .thenReturn(EventResult.of(null, new Account("100", 10L)));
+
+        Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\":\"DePosIt\",\"destination\":\"100\",\"amount\":10}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.destination.id").value("100")));
     }
 }

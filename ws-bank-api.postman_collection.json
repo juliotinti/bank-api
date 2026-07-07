@@ -1,0 +1,458 @@
+{
+  "info": {
+    "name": "WS Bank API",
+    "_postman_id": "6e68d1c7-56c7-4c6f-b686-2b0a542bcb20",
+    "description": "Collection para testar o fluxo da API bancaria local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Reset state",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/reset",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "reset"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('body is OK', function () {",
+              "  pm.expect(pm.response.text()).to.eql('OK');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Create account with initial balance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":10}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/event",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "event"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('destination account has balance 10', function () {",
+              "  pm.expect(pm.response.json()).to.eql({",
+              "    destination: { id: '100', balance: 10 }",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Deposit into existing account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":10}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/event",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "event"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('destination account has balance 20', function () {",
+              "  pm.expect(pm.response.json()).to.eql({",
+              "    destination: { id: '100', balance: 20 }",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Get balance for existing account after deposits",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/balance?account_id=100",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "balance"
+          ],
+          "query": [
+            {
+              "key": "account_id",
+              "value": "100"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('body is 20', function () {",
+              "  pm.expect(pm.response.text()).to.eql('20');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Withdraw from non-existing account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\":\"withdraw\",\"origin\":\"200\",\"amount\":10}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/event",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "event"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('body is 0', function () {",
+              "  pm.expect(pm.response.text()).to.eql('0');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Withdraw from existing account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\":\"withdraw\",\"origin\":\"100\",\"amount\":5}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/event",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "event"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('origin account has balance 15', function () {",
+              "  pm.expect(pm.response.json()).to.eql({",
+              "    origin: { id: '100', balance: 15 }",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Transfer from existing account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\":\"transfer\",\"origin\":\"100\",\"amount\":15,\"destination\":\"300\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/event",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "event"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('origin is 0 and destination is 15', function () {",
+              "  pm.expect(pm.response.json()).to.eql({",
+              "    origin: { id: '100', balance: 0 },",
+              "    destination: { id: '300', balance: 15 }",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Transfer from non-existing account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\":\"transfer\",\"origin\":\"200\",\"amount\":15,\"destination\":\"300\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/event",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "event"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('body is 0', function () {",
+              "  pm.expect(pm.response.text()).to.eql('0');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Get balance for non-existing account",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/balance?account_id=1234",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "balance"
+          ],
+          "query": [
+            {
+              "key": "account_id",
+              "value": "1234"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('body is 0', function () {",
+              "  pm.expect(pm.response.text()).to.eql('0');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Get balance for existing account after full flow",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/balance?account_id=100",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "balance"
+          ],
+          "query": [
+            {
+              "key": "account_id",
+              "value": "100"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('body is 0 after withdraw and transfer', function () {",
+              "  pm.expect(pm.response.text()).to.eql('0');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

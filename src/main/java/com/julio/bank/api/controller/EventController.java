@@ -5,6 +5,7 @@ import com.julio.bank.api.domain.EventRequest;
 import com.julio.bank.api.domain.EventResult;
 import com.julio.bank.api.domain.EventType;
 import com.julio.bank.api.service.EventService;
+import com.julio.bank.api.validation.EventValidation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,23 +20,21 @@ public class EventController
 
     private final EventService eventService;
 
-    public EventController(EventService eventService)
+    private final EventValidation eventValidation;
+
+    public EventController(EventService eventService, EventValidation eventValidation)
     {
         this.eventService = eventService;
+        this.eventValidation = eventValidation;
     }
 
     @PostMapping
     public ResponseEntity<EventResult> handle(@RequestBody EventRequestDto dto)
     {
-        EventRequest request = new EventRequest(
-                parseType(dto.type()),
-                dto.origin(),
-                dto.destination(),
-                dto.amount()
-        );
+        EventRequest request = eventValidation.validate(
+                dto.type(), dto.origin(), dto.destination(), dto.amount());
 
         EventResult result = eventService.process(request);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
