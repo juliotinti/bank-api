@@ -89,7 +89,7 @@ class EventControllerTest
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Balance not found for account: 200"))
+                .andExpect(jsonPath("$.message").value("Account not found: 200"))
                 .andExpect(jsonPath("$.path").value("/event")));
     }
 

@@ -48,7 +48,7 @@ class BalanceControllerTest
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Balance not found for account: 1234"))
+                .andExpect(jsonPath("$.message").value("Account not found: 1234"))
                 .andExpect(jsonPath("$.path").value("/balance")));
     }
 }
