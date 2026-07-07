@@ -38,18 +38,4 @@ public class EventController
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
-    private EventType parseType(String rawType)
-    {
-        if (rawType == null)
-        {
-            throw new IllegalArgumentException("Event type must not be null");
-        }
-        try
-        {
-            return EventType.valueOf(rawType.toUpperCase());
-        } catch (IllegalArgumentException ex)
-        {
-            throw new IllegalArgumentException("Unsupported event type: " + rawType);
-        }
-    }
 }

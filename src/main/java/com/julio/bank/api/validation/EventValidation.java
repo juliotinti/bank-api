@@ -12,6 +12,7 @@ public class EventValidation
     public EventRequest validate(String rawType, String origin, String destination, Long amount) {
         validateAmount(amount);
         EventType type = parseType(rawType);
+        validateRequiredFields(type, origin, destination);
         return new EventRequest(type, origin, destination, amount);
     }
 
@@ -29,6 +30,23 @@ public class EventValidation
             return EventType.valueOf(rawType.toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new InvalidEventTypeException(rawType);
+        }
+    }
+
+    private void validateRequiredFields(EventType type, String origin, String destination) {
+        switch (type) {
+            case DEPOSIT -> requirePresent(destination, "destination");
+            case WITHDRAW -> requirePresent(origin, "origin");
+            case TRANSFER -> {
+                requirePresent(origin, "origin");
+                requirePresent(destination, "destination");
+            }
+        }
+    }
+
+    private void requirePresent(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " is required");
         }
     }
 }

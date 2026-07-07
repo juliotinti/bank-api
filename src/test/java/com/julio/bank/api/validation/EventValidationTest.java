@@ -77,4 +77,32 @@ class EventValidationTest {
         assertThatThrownBy(() -> eventValidation.validate("unknown", null, "100", -10L))
                 .isInstanceOf(InvalidAmountException.class);
     }
+
+    @Test
+    void shouldThrowIllegalArgumentException_whenDepositDestinationIsMissing_thenValidationFails()
+    {
+        assertThatThrownBy(() -> eventValidation.validate("deposit", null, null, 10L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("destination is required");
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentException_whenWithdrawOriginIsMissing_thenValidationFails()
+    {
+        assertThatThrownBy(() -> eventValidation.validate("withdraw", null, null, 10L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("origin is required");
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentException_whenTransferFieldsAreMissing_thenValidationFails()
+    {
+        assertThatThrownBy(() -> eventValidation.validate("transfer", null, "300", 15L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("origin is required");
+
+        assertThatThrownBy(() -> eventValidation.validate("transfer", "100", " ", 15L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("destination is required");
+    }
 }
