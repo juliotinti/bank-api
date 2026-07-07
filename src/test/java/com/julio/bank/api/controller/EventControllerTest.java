@@ -116,7 +116,7 @@ class EventControllerTest
                         .content("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":-10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount must be positive, got: -10"))
+                .andExpect(jsonPath("$.message").value("Amount must be positive: -10"))
                 .andExpect(jsonPath("$.path").value("/event")));
     }
 
@@ -140,7 +140,7 @@ class EventControllerTest
                         .content("{\"type\":\"deposit\",\"destination\":\"100\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount must be positive, got: null"))
+                .andExpect(jsonPath("$.message").value("Amount is required"))
                 .andExpect(jsonPath("$.path").value("/event")));
     }
 
@@ -152,7 +152,7 @@ class EventControllerTest
                         .content("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":0}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount must be positive, got: 0"))
+                .andExpect(jsonPath("$.message").value("Amount must be positive: 0"))
                 .andExpect(jsonPath("$.path").value("/event")));
     }
 
@@ -164,7 +164,7 @@ class EventControllerTest
                         .content("{\"destination\":\"100\",\"amount\":10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Unsupported event type: null"))
+                .andExpect(jsonPath("$.message").value("Event type is required"))
                 .andExpect(jsonPath("$.path").value("/event")));
     }
 
@@ -176,7 +176,7 @@ class EventControllerTest
                         .content("{\"type\":\"\",\"destination\":\"100\",\"amount\":10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Unsupported event type: "))
+                .andExpect(jsonPath("$.message").value("Event type is required"))
                 .andExpect(jsonPath("$.path").value("/event")));
     }
 
@@ -188,7 +188,7 @@ class EventControllerTest
                         .content("{\"type\":\"unknown\",\"destination\":\"100\",\"amount\":-10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount must be positive, got: -10"))
+                .andExpect(jsonPath("$.message").value("Amount must be positive: -10"))
                 .andExpect(jsonPath("$.path").value("/event")));
     }
 

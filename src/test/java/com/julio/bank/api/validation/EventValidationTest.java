@@ -40,42 +40,48 @@ class EventValidationTest {
     void shouldThrowInvalidAmountException_whenAmountIsNull_thenTypeIsNeverParsed()
     {
         assertThatThrownBy(() -> eventValidation.validate("deposit", null, "100", null))
-                .isInstanceOf(InvalidAmountException.class);
+                .isInstanceOf(InvalidAmountException.class)
+                .hasMessage("Amount is required");
     }
 
     @Test
     void shouldThrowInvalidAmountException_whenAmountIsZero_thenValidationFails()
     {
         assertThatThrownBy(() -> eventValidation.validate("deposit", null, "100", 0L))
-                .isInstanceOf(InvalidAmountException.class);
+                .isInstanceOf(InvalidAmountException.class)
+                .hasMessage("Amount must be positive: 0");
     }
 
     @Test
     void shouldThrowInvalidAmountException_whenAmountIsNegative_thenValidationFails()
     {
         assertThatThrownBy(() -> eventValidation.validate("withdraw", "100", null, -10L))
-                .isInstanceOf(InvalidAmountException.class);
+                .isInstanceOf(InvalidAmountException.class)
+                .hasMessage("Amount must be positive: -10");
     }
 
     @Test
     void shouldThrowInvalidEventTypeException_whenRawTypeIsUnknown_thenValidationFails()
     {
         assertThatThrownBy(() -> eventValidation.validate("unknown", null, "100", 10L))
-                .isInstanceOf(InvalidEventTypeException.class);
+                .isInstanceOf(InvalidEventTypeException.class)
+                .hasMessage("Unsupported event type: unknown");
     }
 
     @Test
     void shouldThrowInvalidEventTypeException_whenRawTypeIsNull_thenValidationFails()
     {
         assertThatThrownBy(() -> eventValidation.validate(null, null, "100", 10L))
-                .isInstanceOf(InvalidEventTypeException.class);
+                .isInstanceOf(InvalidEventTypeException.class)
+                .hasMessage("Event type is required");
     }
 
     @Test
     void shouldThrowInvalidAmountException_whenBothAmountAndTypeAreInvalid_thenAmountIsCheckedFirst()
     {
         assertThatThrownBy(() -> eventValidation.validate("unknown", null, "100", -10L))
-                .isInstanceOf(InvalidAmountException.class);
+                .isInstanceOf(InvalidAmountException.class)
+                .hasMessage("Amount must be positive: -10");
     }
 
     @Test
@@ -83,7 +89,7 @@ class EventValidationTest {
     {
         assertThatThrownBy(() -> eventValidation.validate("deposit", null, null, 10L))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("destination is required");
+                .hasMessage("Destination account is required");
     }
 
     @Test
@@ -91,7 +97,7 @@ class EventValidationTest {
     {
         assertThatThrownBy(() -> eventValidation.validate("withdraw", null, null, 10L))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("origin is required");
+                .hasMessage("Origin account is required");
     }
 
     @Test
@@ -99,10 +105,10 @@ class EventValidationTest {
     {
         assertThatThrownBy(() -> eventValidation.validate("transfer", null, "300", 15L))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("origin is required");
+                .hasMessage("Origin account is required");
 
         assertThatThrownBy(() -> eventValidation.validate("transfer", "100", " ", 15L))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("destination is required");
+                .hasMessage("Destination account is required");
     }
 }

@@ -23,8 +23,8 @@ public class EventValidation
     }
 
     private EventType parseType(String rawType) {
-        if (rawType == null) {
-            throw new InvalidEventTypeException(null);
+        if (rawType == null || rawType.isBlank()) {
+            throw new InvalidEventTypeException(rawType);
         }
         try {
             return EventType.valueOf(rawType.toUpperCase());
@@ -35,11 +35,11 @@ public class EventValidation
 
     private void validateRequiredFields(EventType type, String origin, String destination) {
         switch (type) {
-            case DEPOSIT -> requirePresent(destination, "destination");
-            case WITHDRAW -> requirePresent(origin, "origin");
+            case DEPOSIT -> requirePresent(destination, "Destination account");
+            case WITHDRAW -> requirePresent(origin, "Origin account");
             case TRANSFER -> {
-                requirePresent(origin, "origin");
-                requirePresent(destination, "destination");
+                requirePresent(origin, "Origin account");
+                requirePresent(destination, "Destination account");
             }
         }
     }

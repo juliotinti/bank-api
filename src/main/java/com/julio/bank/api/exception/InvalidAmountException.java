@@ -4,6 +4,6 @@ public class InvalidAmountException extends RuntimeException
 {
     public InvalidAmountException(Long amount)
     {
-        super("Amount must be positive, got: " + amount);
+        super(amount == null ? "Amount is required" : "Amount must be positive: " + amount);
     }
 }
