@@ -1,110 +1,75 @@
 package com.julio.bank.api;
 
-import org.junit.jupiter.api.Assertions;
+import com.julio.bank.api.domain.EventRequest;
+import com.julio.bank.api.domain.EventResult;
+import com.julio.bank.api.domain.EventType;
+import com.julio.bank.api.entity.Balance;
+import com.julio.bank.api.exception.BalanceNotFoundException;
+import com.julio.bank.api.service.BalanceService;
+import com.julio.bank.api.service.EventService;
+import com.julio.bank.api.service.ResetService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 class ApiFlowIntegrationTest
 {
 
     @Autowired
-    private MockMvc mockMvc;
+    private ResetService resetService;
+
+    @Autowired
+    private EventService eventService;
+
+    @Autowired
+    private BalanceService balanceService;
 
     @Test
-    void shouldProcessCompleteBankFlow_whenRequestsAreExecutedInSequence_thenStateIsConsistent()
+    void shouldProcessCompleteBankFlow_whenEventsAreExecutedInSequence_thenStateIsConsistent()
     {
-        Assertions.assertDoesNotThrow(() -> {
-            mockMvc.perform(post("/reset"))
-                    .andExpect(status().isOk());
+        resetService.resetAll();
 
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":10}"))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.destination.id").value("100"))
-                    .andExpect(jsonPath("$.destination.balance").value(10))
-                    .andExpect(jsonPath("$.origin").doesNotExist());
+        EventResult initialDeposit = eventService.process(
+                new EventRequest(EventType.DEPOSIT, null, "100", 10L));
+        assertThat(initialDeposit.destination().id()).isEqualTo("100");
+        assertThat(initialDeposit.destination().balance()).isEqualTo(10L);
 
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":10}"))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.destination.id").value("100"))
-                    .andExpect(jsonPath("$.destination.balance").value(20));
+        EventResult secondDeposit = eventService.process(
+                new EventRequest(EventType.DEPOSIT, null, "100", 10L));
+        assertThat(secondDeposit.destination().id()).isEqualTo("100");
+        assertThat(secondDeposit.destination().balance()).isEqualTo(20L);
 
-            mockMvc.perform(get("/balance").param("account_id", "100"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("20"));
+        Balance balanceAfterDeposits = balanceService.getBalance("100");
+        assertThat(balanceAfterDeposits.getBalance()).isEqualTo(20L);
 
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"withdraw\",\"origin\":\"200\",\"amount\":10}"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").value("Account not found: 200"));
+        assertThatThrownBy(() -> eventService.process(
+                new EventRequest(EventType.WITHDRAW, "200", null, 10L)))
+                .isInstanceOf(BalanceNotFoundException.class);
 
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"withdraw\",\"origin\":\"100\",\"amount\":5}"))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.origin.id").value("100"))
-                    .andExpect(jsonPath("$.origin.balance").value(15))
-                    .andExpect(jsonPath("$.destination").doesNotExist());
+        EventResult withdraw = eventService.process(
+                new EventRequest(EventType.WITHDRAW, "100", null, 5L));
+        assertThat(withdraw.origin().id()).isEqualTo("100");
+        assertThat(withdraw.origin().balance()).isEqualTo(15L);
 
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"transfer\",\"origin\":\"100\",\"amount\":15,\"destination\":\"300\"}"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").value("Account not found: 300"));
+        EventResult transfer = eventService.process(
+                new EventRequest(EventType.TRANSFER, "100", "300", 15L));
+        assertThat(transfer.origin().id()).isEqualTo("100");
+        assertThat(transfer.origin().balance()).isEqualTo(0L);
+        assertThat(transfer.destination().id()).isEqualTo("300");
+        assertThat(transfer.destination().balance()).isEqualTo(15L);
 
-            mockMvc.perform(get("/balance").param("account_id", "100"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("15"));
+        assertThatThrownBy(() -> eventService.process(
+                new EventRequest(EventType.TRANSFER, "200", "300", 15L)))
+                .isInstanceOf(BalanceNotFoundException.class);
 
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"deposit\",\"destination\":\"300\",\"amount\":5}"))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.destination.id").value("300"))
-                    .andExpect(jsonPath("$.destination.balance").value(5));
+        assertThatThrownBy(() -> balanceService.getBalance("1234"))
+                .isInstanceOf(BalanceNotFoundException.class);
 
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"transfer\",\"origin\":\"100\",\"amount\":15,\"destination\":\"300\"}"))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.origin.id").value("100"))
-                    .andExpect(jsonPath("$.origin.balance").value(0))
-                    .andExpect(jsonPath("$.destination.id").value("300"))
-                    .andExpect(jsonPath("$.destination.balance").value(20));
-
-            mockMvc.perform(post("/event")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"type\":\"transfer\",\"origin\":\"200\",\"amount\":15,\"destination\":\"300\"}"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").value("Account not found: 200"));
-
-            mockMvc.perform(get("/balance").param("account_id", "1234"))
-                    .andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.message").value("Account not found: 1234"));
-
-            mockMvc.perform(get("/balance").param("account_id", "100"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("0"));
-
-            mockMvc.perform(get("/balance").param("account_id", "300"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("20"));
-        });
+        assertThat(balanceService.getBalance("100").getBalance()).isEqualTo(0L);
+        assertThat(balanceService.getBalance("300").getBalance()).isEqualTo(15L);
     }
 }

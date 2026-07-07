@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -78,7 +79,7 @@ class EventControllerTest
     }
 
     @Test
-    void shouldReturn404WithErrorBody_whenAccountNotFound_thenMatchesContract()
+    void shouldReturn404WithZeroBody_whenAccountNotFound_thenMatchesContract()
     {
         when(eventService.process(any(EventRequest.class)))
                 .thenThrow(new BalanceNotFoundException("200"));
@@ -87,14 +88,11 @@ class EventControllerTest
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"withdraw\",\"origin\":\"200\",\"amount\":10}"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Account not found: 200"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenBalanceIsInsufficient_thenMatchesConvention() {
+    void shouldReturn400WithZeroBody_whenBalanceIsInsufficient_thenMatchesConvention() {
         when(eventService.process(any(EventRequest.class)))
                 .thenThrow(new InsufficientBalanceException("100"));
 
@@ -102,94 +100,77 @@ class EventControllerTest
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"withdraw\",\"origin\":\"100\",\"amount\":9999}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Insufficient balance for account: 100"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenAmountIsNegative_thenEventServiceIsNeverCalled()
+    void shouldReturn400WithZeroBody_whenAmountIsNegative_thenEventServiceIsNeverCalled()
     {
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":-10}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount must be positive: -10"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenEventTypeIsUnknown_thenEventServiceIsNeverCalled()
+    void shouldReturn400WithZeroBody_whenEventTypeIsUnknown_thenEventServiceIsNeverCalled()
     {
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"unknown\",\"destination\":\"100\",\"amount\":10}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Unsupported event type: unknown"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenAmountIsMissing_thenEventServiceIsNeverCalled()
+    void shouldReturn400WithZeroBody_whenAmountIsMissing_thenEventServiceIsNeverCalled()
     {
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"deposit\",\"destination\":\"100\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount is required"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenAmountIsZero_thenEventServiceIsNeverCalled()
+    void shouldReturn400WithZeroBody_whenAmountIsZero_thenEventServiceIsNeverCalled()
     {
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":0}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount must be positive: 0"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenTypeIsMissing_thenEventServiceIsNeverCalled()
+    void shouldReturn400WithZeroBody_whenTypeIsMissing_thenEventServiceIsNeverCalled()
     {
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"destination\":\"100\",\"amount\":10}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Event type is required"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenTypeIsEmptyString_thenEventServiceIsNeverCalled()
+    void shouldReturn400WithZeroBody_whenTypeIsEmptyString_thenEventServiceIsNeverCalled()
     {
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"\",\"destination\":\"100\",\"amount\":10}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Event type is required"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test
-    void shouldReturn400WithErrorBody_whenBothTypeAndAmountAreInvalid_thenEventServiceIsNeverCalled()
+    void shouldReturn400WithZeroBody_whenBothTypeAndAmountAreInvalid_thenEventServiceIsNeverCalled()
     {
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(post("/event")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"type\":\"unknown\",\"destination\":\"100\",\"amount\":-10}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Amount must be positive: -10"))
-                .andExpect(jsonPath("$.path").value("/event")));
+                .andExpect(content().string("0")));
     }
 
     @Test

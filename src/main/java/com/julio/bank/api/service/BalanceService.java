@@ -62,16 +62,19 @@ public class BalanceService
     @Transactional
     public Balance credit(String id, Long amount)
     {
-        Balance balance = balanceRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> {
-                    log.error("Credit failed, account not found: id={}", id);
-                    return new BalanceNotFoundException(id);
+        return balanceRepository.findByIdForUpdate(id)
+                .map(balance -> {
+                    balance.deposit(amount);
+                    Balance saved = balanceRepository.save(balance);
+                    log.info("Credit succeeded (existing account): id={}, amount={}, newBalance={}",
+                            id, amount, saved.getBalance());
+                    return saved;
+                })
+                .orElseGet(() -> {
+                    Balance saved = balanceRepository.save(new Balance(id, amount));
+                    log.info("Credit succeeded (account created): id={}, initialBalance={}", id, amount);
+                    return saved;
                 });
-
-        balance.deposit(amount);
-        Balance saved = balanceRepository.save(balance);
-        log.info("Credit succeeded: id={}, amount={}, newBalance={}", id, amount, saved.getBalance());
-        return saved;
     }
 
     @Transactional

@@ -16,9 +16,9 @@ public class ResetController {
     }
 
     @PostMapping("/reset")
-    public ResponseEntity<Void> reset()
+    public ResponseEntity<String> reset()
     {
         resetService.resetAll();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("OK");
     }
 }

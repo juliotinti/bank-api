@@ -101,13 +101,15 @@ class BalanceServiceTest {
     }
 
     @Test
-    void shouldThrowBalanceNotFoundException_whenCreditingMissingAccount_thenNothingIsSaved() {
+    void shouldCreateAccount_whenCreditingMissingAccount_thenNewBalanceIsPersisted() {
         when(balanceRepository.findByIdForUpdate("999")).thenReturn(Optional.empty());
+        when(balanceRepository.save(org.mockito.ArgumentMatchers.any(Balance.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThatThrownBy(() -> balanceService.credit("999", 10L))
-                .isInstanceOf(BalanceNotFoundException.class);
+        Balance result = balanceService.credit("999", 10L);
 
-        verify(balanceRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        assertThat(result.getId()).isEqualTo("999");
+        assertThat(result.getBalance()).isEqualTo(10L);
     }
 
     @Test
