@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BalanceController.class)
@@ -39,12 +40,15 @@ class BalanceControllerTest
     }
 
     @Test
-    void shouldReturn404WithZeroBody_whenAccountDoesNotExist_thenMatchesContract()
+    void shouldReturn404WithErrorBody_whenAccountDoesNotExist_thenMatchesContract()
     {
         when(balanceService.getBalance("1234")).thenThrow(new BalanceNotFoundException("1234"));
 
         Assertions.assertDoesNotThrow(() -> mockMvc.perform(get("/balance").param("account_id", "1234"))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("0")));
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Balance not found for account: 1234"))
+                .andExpect(jsonPath("$.path").value("/balance")));
     }
 }
